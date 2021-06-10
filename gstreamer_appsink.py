@@ -21,8 +21,10 @@ def cb_appsink(appsink):
     array = np.ndarray(shape=(GlobalVar.HEIGHT, GlobalVar.WIDTH, 3),
                        buffer=gst_buffer.extract_dup(0, gst_buffer.get_size()), dtype='uint8')
 
-    # GlobalVar.pipe_gimg_send.send(array)
-    GlobalVar.queue_gimg.put(array)
+    with GlobalVar.shared_array_gimg.get_lock():
+        np_array = np.frombuffer(GlobalVar.shared_array_gimg.get_obj(), dtype="uint8").reshape(GlobalVar.array_shape)
+        # np_array = np.ctypeslib.as_array(mp_array).reshape(array_shape)
+        np_array[:] = array[:]
 
     # print("hi from cb_appsink end")
     return Gst.FlowReturn.OK

@@ -66,8 +66,12 @@ class YoloNet:
         prediction[:, [2, 4]] -= (self._inp_dim - scaling_factor * self._im_dim[:, 1].view(-1, 1)) / 2
         prediction[:, 1:5] /= scaling_factor
         for i in range(prediction.shape[0]):
-            prediction[i, [1, 3]] = torch.clamp(prediction[i, [1, 3]], 0.0, self._im_dim[i, 0])
-            prediction[i, [2, 4]] = torch.clamp(prediction[i, [2, 4]], 0.0, self._im_dim[i, 1])
+            try:
+                prediction[i, [1, 3]] = torch.clamp(prediction[i, [1, 3]], 0.0, self._im_dim[i, 0])
+                prediction[i, [2, 4]] = torch.clamp(prediction[i, [2, 4]], 0.0, self._im_dim[i, 1])
+            except:
+                print("[error] with  torch.clamp")
+                print(prediction)
         return prediction.cpu().numpy()
 
     def write(self, x, results, out_jpg_path):

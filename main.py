@@ -11,6 +11,7 @@ from minitouch import TouchStatus, MiniTouch, XY
 
 import time
 import math
+import numpy as np
 
 from multiprocessing import Process
 
@@ -20,8 +21,9 @@ def detect_thread(CFG_PATH, WEIGHT_PATH, LABEL):
 
     # t1 = time.time()
     while True:
-        # array = GlobalVar.pipe_gimg_recv.recv()
-        array = GlobalVar.queue_gimg.get()
+        with GlobalVar.shared_array_gimg.get_lock():
+            np_array = np.frombuffer(GlobalVar.shared_array_gimg.get_obj(), dtype="uint8").reshape(GlobalVar.array_shape)
+            array = np_array.copy()
 
         # t1 = time.time()
         inp_data, orig_ims = yolo_net.prepare(array)
@@ -34,10 +36,15 @@ def detect_thread(CFG_PATH, WEIGHT_PATH, LABEL):
         # t1 = time.time()-t1
         # print(t1)
 
-        # GlobalVar.pipe_gshow_send.send(array)
-        # GlobalVar.pipe_gresult_send.send(result)
-        GlobalVar.queue_gshow.put(array)
-        GlobalVar.queue_gresult.put(result)
+        with GlobalVar.lock:
+            # np_array_gshow = np.frombuffer(GlobalVar.shared_array_gshow.get_obj(), dtype="uint8").reshape(GlobalVar.array_shape)
+            np_array_gshow = np.frombuffer(GlobalVar.shared_array_gshow, dtype="uint8").reshape(GlobalVar.array_shape)
+            np_array_gshow[:] = array[:]
+
+            np_array_result = np.frombuffer(GlobalVar.shared_array_result, dtype="float32").reshape([10, 7])
+            # print(result.shape)
+            # print(result)
+            np_array_result[0:len(result), 0:7] = result[:, 0:7]
 
 
 def calculate_angle(result):
@@ -94,8 +101,10 @@ def touch_action_thread():
             time.sleep(1.8)
 
             # result = GlobalVar.pipe_gresult_recv.recv()
-            result = GlobalVar.queue_gresult.get()
-
+            # result = GlobalVar.queue_gresult.get()
+            with GlobalVar.lock:
+                np_array_result = np.frombuffer(GlobalVar.shared_array_result, dtype="float32").reshape([10, 7])
+                result = np_array_result.copy()
             angle = calculate_angle(result)
 
             print("result: ", result)
@@ -124,10 +133,8 @@ def gstreamer_appsrc_thread():
 
 
 if __name__ == "__main__":
-    Process(target=touch_status_thread, args=(GlobalVar.queue_touch,),
-                            name='touch_status_thread').start()
+    Process(target=touch_status_thread, args=(GlobalVar.queue_touch,), name='touch_status_thread').start()
     Process(target=touch_action_thread, name='touch_action_thread').start()
-    Process(target=detect_thread, args=(GlobalVar.CFG_PATH, GlobalVar.WEIGHT_PATH, GlobalVar.LABEL),
-                            name='detect_thread').start()
+    Process(target=detect_thread, args=(GlobalVar.CFG_PATH, GlobalVar.WEIGHT_PATH, GlobalVar.LABEL), name='detect_thread').start()
     Process(target=gstreamer_appsrc_thread, name='gstreamer_appsrc_thread').start()
     gstreamer_appsink_thread()

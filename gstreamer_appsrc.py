@@ -33,14 +33,17 @@ def cb_appsrc(appsrc, b):
     # print("hi form cb_appsrc")
     global pts, duration
 
-    # array = GlobalVar.pipe_gimg_recv.recv()
-    # array = GlobalVar.pipe_gshow_recv.recv()
-    # result = GlobalVar.pipe_gresult_recv.recv()
+    # with GlobalVar.shared_array_gshow.get_lock():
+    with GlobalVar.lock:
+        # np_array = np.frombuffer(GlobalVar.shared_array_gshow.get_obj(), dtype="uint8").reshape(GlobalVar.array_shape)
+        np_array = np.frombuffer(GlobalVar.shared_array_gshow, dtype="uint8").reshape(GlobalVar.array_shape)
+        array = np_array.copy()
 
-    array = GlobalVar.queue_gshow.get()
-    result = GlobalVar.queue_gresult.get()
+        np_array_result = np.frombuffer(GlobalVar.shared_array_result, dtype="float32").reshape([10, 7])
+        result = np_array_result.copy()
+    # result = GlobalVar.queue_gresult.get()
+    # print(result)
 
-    #
     im = Image.fromarray(array)
     draw = ImageDraw.Draw(im)
     # print(result)

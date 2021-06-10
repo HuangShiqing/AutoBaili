@@ -6,7 +6,6 @@
 ![](./data/2.gif)
 
 ## Videos
-
 请一键三连!!!!!
 
 ## Requirements

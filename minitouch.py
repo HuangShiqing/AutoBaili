@@ -176,11 +176,11 @@ class TouchStatus(object):
                             self._interested_index = self._act_touch_index
                             # self._event_down.send(["down"])
                             self._event_down.put(["down"])
-                            print("act_: down")
-                            print("act_touch_index_: ", self._act_touch_index)
-                            print("x: ", self._xy.get_x())
-                            print("y: ", self._xy.get_y())
-                            print("")
+                            # print("act_: down")
+                            # print("act_touch_index_: ", self._act_touch_index)
+                            # print("x: ", self._xy.get_x())
+                            # print("y: ", self._xy.get_y())
+                            # print("")
 
                     elif self._act == 1:  # 抬起
                         if self._interested_index == self._act_touch_index:

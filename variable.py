@@ -1,5 +1,6 @@
 # from threading import Thread, Lock, Event
-from multiprocessing import Lock, Event, Queue, Pipe  # shared_memory
+from multiprocessing import Lock, Event, Queue, Pipe, Array, shared_memory
+import ctypes
 import numpy as np
 
 
@@ -15,12 +16,16 @@ class GlobalVar(object):
     WEIGHT_PATH = "./backup/yolov3-tiny_60000.weights"
     LABEL = ["enemy"]
 
-    # pipe_gimg_send, pipe_gimg_recv = Pipe()
-    # pipe_gshow_send, pipe_gshow_recv = Pipe()
-    # pipe_gresult_send, pipe_gresult_recv = Pipe()
-    # pipe_touch_send, pipe_touch_recv = Pipe()
-
-    queue_gimg = Queue()
-    queue_gshow = Queue()
-    queue_gresult = Queue()
     queue_touch = Queue()
+
+    array_shape = (HEIGHT, WIDTH, 3)
+    shared_array_gimg = Array(ctypes.c_uint8, int(WIDTH * HEIGHT * 3))
+
+    shared_array_gshow = Array(ctypes.c_uint8, int(WIDTH * HEIGHT * 3), lock=False)
+    shared_array_result = Array(ctypes.c_float, int(10*7), lock=False)
+    lock = Lock()
+
+
+if __name__ == '__main__':
+    a = GlobalVar()
+    exit()
